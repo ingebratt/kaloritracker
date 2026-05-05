@@ -425,7 +425,10 @@ async function analyzeImage() {
         alert('API-nøkkelen er ugyldig. Sjekk at du kopierte den riktig.');
         showSetup(); return;
       }
-      throw new Error(data.error.message);
+      throw new Error('API-feil: ' + data.error.type + ' – ' + data.error.message);
+    }
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status + ': ' + JSON.stringify(data));
     }
     const text = data.content.map(i => i.text || '').join('');
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
@@ -441,7 +444,7 @@ async function analyzeImage() {
     document.getElementById('result-card').style.display = 'block';
     window.scrollTo({ top: document.getElementById('result-card').offsetTop - 20, behavior: 'smooth' });
   } catch(err) {
-    alert('Klarte ikke analysere bildet. Sjekk internettforbindelsen og prøv igjen.');
+    alert('Feil: ' + (err.message || JSON.stringify(err)));
     document.getElementById('preview-section').style.display = 'block';
   }
   document.getElementById('analyzing').style.display = 'none';
