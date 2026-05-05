@@ -177,6 +177,89 @@
   .api-key-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .api-key-label { font-size: 12px; color: var(--dim); }
   .api-key-change { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 4px 0; font-family: inherit; text-decoration: underline; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #111; border-top: 0.5px solid var(--border);
+    display: flex; height: 64px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    z-index: 50;
+  }
+  .bnav-btn {
+    flex: 1; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; color: var(--dim); font-size: 11px; font-family: inherit;
+    transition: color 0.15s;
+  }
+  .bnav-btn span:first-child { font-size: 20px; }
+  .bnav-btn.active { color: var(--green); }
+
+  /* Interval tabs */
+  .interval-tabs {
+    display: flex; background: var(--surface); border-radius: var(--radius-sm);
+    padding: 4px; margin-bottom: 16px; gap: 4px;
+  }
+  .itab {
+    flex: 1; padding: 8px; border: none; background: transparent;
+    border-radius: 8px; color: var(--muted); font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .itab.active { background: var(--surface2); color: var(--text); }
+
+  /* Period nav */
+  .period-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .period-btn {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 18px;
+    width: 40px; height: 40px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .period-label { font-size: 15px; font-weight: 600; color: var(--text); }
+
+  /* Stats cards */
+  .stats-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stats-cards .stat-unit { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  /* Macro bars */
+  .macro-summary { background: var(--surface); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 20px; }
+  .macro-bar-wrap { margin-bottom: 14px; }
+  .macro-bar-wrap:last-child { margin-bottom: 0; }
+  .macro-bar-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .macro-bar-bg { background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+  .macro-bar { height: 8px; border-radius: 4px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+
+  /* Chart */
+  .chart-section { background: var(--surface); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 20px; }
+  .chart-title { font-size: 13px; color: var(--muted); margin-bottom: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .chart-wrap { display: flex; align-items: flex-end; gap: 4px; height: 140px; }
+  .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .chart-bar {
+    width: 100%; border-radius: 4px 4px 0 0;
+    min-height: 3px; transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+    cursor: pointer; position: relative;
+  }
+  .chart-bar.today { outline: 2px solid var(--green); outline-offset: 1px; }
+  .chart-bar.selected { opacity: 1 !important; outline: 2px solid white; outline-offset: 1px; }
+  .chart-lbl { font-size: 9px; color: var(--dim); text-align: center; white-space: nowrap; }
+  .chart-val { font-size: 9px; color: var(--muted); }
+
+  /* Detail table */
+  .detail-section { }
+  .detail-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border);
+    font-size: 14px;
+  }
+  .detail-row:last-child { border: none; }
+  .detail-name { color: var(--text); flex: 1; padding-right: 8px; }
+  .detail-macros { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .detail-kcal { color: var(--green); font-weight: 600; flex-shrink: 0; }
+  .detail-empty { color: var(--dim); font-size: 14px; text-align: center; padding: 24px 0; }
+  .detail-date-header { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 0 6px; }
 </style>
 </head>
 <body>
@@ -316,6 +399,94 @@
     </div>
     <div id="log-list"><div class="log-empty">Ingen måltider logget ennå</div></div>
   </div>
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="bnav-btn active" id="bnav-log" onclick="showPage('log')">
+      <span>🍽️</span><span>Logg</span>
+    </button>
+    <button class="bnav-btn" id="bnav-stats" onclick="showPage('stats')">
+      <span>📊</span><span>Statistikk</span>
+    </button>
+  </div>
+</div>
+
+<!-- STATS PAGE -->
+<div id="stats-page" style="display:none">
+  <div class="app" style="padding-bottom:100px">
+
+    <div class="header">
+      <div class="header-top">
+        <div class="header-greeting">Oversikt</div>
+      </div>
+      <div class="header-title">Statistikk</div>
+    </div>
+
+    <!-- Interval selector -->
+    <div class="interval-tabs">
+      <button class="itab active" onclick="setInterval('day')">Dag</button>
+      <button class="itab" onclick="setInterval('week')">Uke</button>
+      <button class="itab" onclick="setInterval('month')">Måned</button>
+    </div>
+
+    <!-- Nav arrows -->
+    <div class="period-nav">
+      <button class="period-btn" onclick="shiftPeriod(-1)">←</button>
+      <div class="period-label" id="period-label"></div>
+      <button class="period-btn" onclick="shiftPeriod(1)">→</button>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-label">Snitt kalorier</div>
+        <div class="stat-val stat-green" id="st-avg-kcal">–</div>
+        <div class="stat-unit">kcal / dag</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Totalt</div>
+        <div class="stat-val" id="st-total-kcal">–</div>
+        <div class="stat-unit">kcal perioden</div>
+      </div>
+    </div>
+
+    <!-- Macro summary -->
+    <div class="macro-summary">
+      <div class="macro-bar-wrap">
+        <div class="macro-bar-label"><span>Protein</span><span id="st-prot">–g</span></div>
+        <div class="macro-bar-bg"><div class="macro-bar" id="st-prot-bar" style="background:#3b82f6;width:0%"></div></div>
+      </div>
+      <div class="macro-bar-wrap">
+        <div class="macro-bar-label"><span>Karbohydrat</span><span id="st-karb">–g</span></div>
+        <div class="macro-bar-bg"><div class="macro-bar" id="st-karb-bar" style="background:#f59e0b;width:0%"></div></div>
+      </div>
+      <div class="macro-bar-wrap">
+        <div class="macro-bar-label"><span>Fett</span><span id="st-fett">–g</span></div>
+        <div class="macro-bar-bg"><div class="macro-bar" id="st-fett-bar" style="background:#fb923c;width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-section">
+      <div class="chart-title" id="chart-title">Kalorier per dag</div>
+      <div class="chart-wrap" id="chart-wrap"></div>
+    </div>
+
+    <!-- Day detail table -->
+    <div class="detail-section" id="detail-section">
+      <div class="log-title" style="margin-bottom:12px">Detaljer</div>
+      <div id="detail-list"></div>
+    </div>
+
+  </div>
+  <!-- Bottom nav stats page -->
+  <div class="bottom-nav">
+    <button class="bnav-btn" id="bnav-log2" onclick="showPage('log')">
+      <span>🍽️</span><span>Logg</span>
+    </button>
+    <button class="bnav-btn active" id="bnav-stats2" onclick="showPage('stats')">
+      <span>📊</span><span>Statistikk</span>
+    </button>
+  </div>
 </div>
 
 <script>
@@ -371,6 +542,18 @@ function load() {
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: todayKey(), items: log }));
+  // Also save to history
+  const hist = loadHistory();
+  hist[todayKey()] = log.map(i => ({
+    navn: i.navn, kalorier: i.kalorier,
+    protein: i.protein, karb: i.karb, fett: i.fett, tid: i.tid
+  }));
+  localStorage.setItem('kt_history', JSON.stringify(hist));
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('kt_history') || '{}'); }
+  catch(e) { return {}; }
 }
 
 const d = new Date();
@@ -606,6 +789,201 @@ function renderLog() {
 load();
 updateUI();
 renderLog();
+
+// ── PAGE NAVIGATION ──────────────────────────────────────────
+function showPage(page) {
+  const isLog = page === 'log';
+  document.getElementById('main-app').style.display = isLog ? 'block' : 'none';
+  document.getElementById('stats-page').style.display = isLog ? 'none' : 'block';
+  if (!isLog) renderStats();
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+let statsInterval = 'day';
+let statsPeriodOffset = 0;
+
+function setInterval(iv) {
+  statsInterval = iv;
+  statsPeriodOffset = 0;
+  document.querySelectorAll('.itab').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderStats();
+}
+
+function shiftPeriod(dir) {
+  statsPeriodOffset += dir;
+  if (statsPeriodOffset > 0) statsPeriodOffset = 0;
+  renderStats();
+}
+
+function dateKey(d) {
+  return d.toISOString().slice(0,10);
+}
+
+function addDays(d, n) {
+  const r = new Date(d); r.setDate(r.getDate() + n); return r;
+}
+
+function getPeriodDays() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let days = [];
+
+  if (statsInterval === 'day') {
+    const d = addDays(today, statsPeriodOffset);
+    days = [d];
+  } else if (statsInterval === 'week') {
+    // Start on Monday
+    const dow = today.getDay() || 7;
+    const mon = addDays(today, -(dow - 1) + statsPeriodOffset * 7);
+    for (let i = 0; i < 7; i++) days.push(addDays(mon, i));
+  } else if (statsInterval === 'month') {
+    const base = new Date(today.getFullYear(), today.getMonth() + statsPeriodOffset, 1);
+    const daysInMonth = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
+    for (let i = 0; i < daysInMonth; i++) days.push(addDays(base, i));
+  }
+  return days;
+}
+
+function getPeriodLabel(days) {
+  if (statsInterval === 'day') {
+    const d = days[0];
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (dateKey(d) === dateKey(today)) return 'I dag';
+    if (dateKey(d) === dateKey(addDays(today,-1))) return 'I går';
+    return d.toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' });
+  } else if (statsInterval === 'week') {
+    const f = days[0], l = days[days.length-1];
+    return f.toLocaleDateString('nb-NO',{day:'numeric',month:'short'}) + ' – ' + l.toLocaleDateString('nb-NO',{day:'numeric',month:'short'});
+  } else {
+    return days[0].toLocaleDateString('nb-NO', { month:'long', year:'numeric' });
+  }
+}
+
+function renderStats() {
+  const hist = loadHistory();
+  // Merge today's live log into history
+  hist[todayKey()] = log.map(i => ({
+    navn: i.navn, kalorier: i.kalorier,
+    protein: i.protein, karb: i.karb, fett: i.fett, tid: i.tid
+  }));
+
+  const days = getPeriodDays();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  document.getElementById('period-label').textContent = getPeriodLabel(days);
+
+  // Aggregate
+  let totalKcal = 0, totalProt = 0, totalKarb = 0, totalFett = 0, daysWithData = 0;
+  const dayTotals = days.map(d => {
+    const items = hist[dateKey(d)] || [];
+    const kcal = items.reduce((s,i) => s + (i.kalorier||0), 0);
+    const prot = items.reduce((s,i) => s + (i.protein||0), 0);
+    const karb = items.reduce((s,i) => s + (i.karb||0), 0);
+    const fett = items.reduce((s,i) => s + (i.fett||0), 0);
+    if (kcal > 0) daysWithData++;
+    totalKcal += kcal; totalProt += prot; totalKarb += karb; totalFett += fett;
+    return { date: d, key: dateKey(d), kcal, prot, karb, fett, items };
+  });
+
+  const avgKcal = daysWithData > 0 ? Math.round(totalKcal / daysWithData) : 0;
+
+  // Summary cards
+  document.getElementById('st-avg-kcal').textContent = avgKcal;
+  document.getElementById('st-total-kcal').textContent = totalKcal;
+
+  // Macro bars
+  const macroTotal = totalProt + totalKarb + totalFett;
+  const pProt = macroTotal > 0 ? Math.round(totalProt/macroTotal*100) : 0;
+  const pKarb = macroTotal > 0 ? Math.round(totalKarb/macroTotal*100) : 0;
+  const pFett = macroTotal > 0 ? Math.round(totalFett/macroTotal*100) : 0;
+  document.getElementById('st-prot').textContent = totalProt + 'g (' + pProt + '%)';
+  document.getElementById('st-karb').textContent = totalKarb + 'g (' + pKarb + '%)';
+  document.getElementById('st-fett').textContent = totalFett + 'g (' + pFett + '%)';
+  document.getElementById('st-prot-bar').style.width = pProt + '%';
+  document.getElementById('st-karb-bar').style.width = pKarb + '%';
+  document.getElementById('st-fett-bar').style.width = pFett + '%';
+
+  // Chart
+  renderChart(dayTotals, today);
+
+  // Detail list (day view shows meals, week/month shows days)
+  renderDetail(dayTotals);
+}
+
+let selectedBar = null;
+
+function renderChart(dayTotals, today) {
+  const maxKcal = Math.max(...dayTotals.map(d => d.kcal), goal, 1);
+  const wrap = document.getElementById('chart-wrap');
+
+  // For month view with many days, show compact bars
+  const isMonth = statsInterval === 'month';
+
+  wrap.innerHTML = dayTotals.map((d, i) => {
+    const pct = Math.round(d.kcal / maxKcal * 100);
+    const isToday = d.key === dateKey(today);
+    const overGoal = d.kcal > goal;
+    const color = d.kcal === 0 ? 'var(--surface2)' : overGoal ? '#ef4444' : '#22c55e';
+    const lbl = statsInterval === 'day'
+      ? d.date.toLocaleTimeString('nb-NO',{hour:'2-digit',minute:'2-digit'}) // not used for day
+      : statsInterval === 'week'
+        ? ['Ma','Ti','On','To','Fr','Lø','Sø'][d.date.getDay() === 0 ? 6 : d.date.getDay()-1]
+        : d.date.getDate();
+
+    return `<div class="chart-bar-wrap" onclick="selectBar(${i})">
+      <div class="chart-val" style="font-size:9px;color:var(--muted)">${d.kcal > 0 ? d.kcal : ''}</div>
+      <div class="chart-bar ${isToday ? 'today' : ''}" id="cbar-${i}"
+        style="height:${Math.max(pct,d.kcal>0?3:1)}%;background:${color};opacity:${selectedBar===null||selectedBar===i?1:0.4}"
+        title="${d.kcal} kcal"></div>
+      <div class="chart-lbl">${lbl}</div>
+    </div>`;
+  }).join('');
+
+  // Goal line (visual indicator via title)
+  document.getElementById('chart-title').textContent =
+    'Kalorier per ' + (statsInterval === 'day' ? 'dag' : statsInterval === 'week' ? 'ukedag' : 'dag i måneden') +
+    '  ·  mål ' + goal + ' kcal';
+}
+
+function selectBar(i) {
+  selectedBar = selectedBar === i ? null : i;
+  renderStats();
+}
+
+function renderDetail(dayTotals) {
+  const el = document.getElementById('detail-list');
+
+  if (statsInterval === 'day') {
+    const d = dayTotals[0];
+    if (!d.items.length) { el.innerHTML = '<div class="detail-empty">Ingen måltider logget</div>'; return; }
+    el.innerHTML = d.items.map(item => `
+      <div class="detail-row">
+        <div>
+          <div class="detail-name">${item.navn}</div>
+          <div class="detail-macros">P:${item.protein||0}g · K:${item.karb||0}g · F:${item.fett||0}g · ${item.tid||''}</div>
+        </div>
+        <div class="detail-kcal">${item.kalorier} kcal</div>
+      </div>`).join('');
+  } else {
+    // Week/month: show each day as a row, expand selected
+    const toShow = selectedBar !== null ? [dayTotals[selectedBar]] : dayTotals.filter(d => d.kcal > 0);
+    if (!toShow.length) { el.innerHTML = '<div class="detail-empty">Ingen data i denne perioden</div>'; return; }
+
+    el.innerHTML = toShow.map(d => {
+      const dayLabel = d.date.toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'short' });
+      const meals = d.items.map(item => `
+        <div class="detail-row" style="padding-left:8px">
+          <div>
+            <div class="detail-name" style="font-size:13px">${item.navn}</div>
+            <div class="detail-macros">P:${item.protein||0}g · K:${item.karb||0}g · F:${item.fett||0}g</div>
+          </div>
+          <div class="detail-kcal" style="font-size:13px">${item.kalorier}</div>
+        </div>`).join('');
+      return `<div class="detail-date-header">${dayLabel} · ${d.kcal} kcal</div>${meals}`;
+    }).join('');
+  }
+}
 </script>
 </body>
 </html>
