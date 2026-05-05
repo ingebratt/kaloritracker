@@ -442,6 +442,7 @@ async function analyzeImage() {
     document.getElementById('r-prot').textContent = parsed.protein_g + 'g';
     document.getElementById('r-karb').textContent = parsed.karbohydrat_g + 'g';
     document.getElementById('r-fett').textContent = parsed.fett_g + 'g';
+    document.getElementById('cam-btn').style.display = 'none';
     document.getElementById('result-card').style.display = 'block';
     setTimeout(() => {
       const card = document.getElementById('result-card');
@@ -482,6 +483,7 @@ function addToLog() {
   document.getElementById('file-input').value = '';
   document.getElementById('result-card').style.display = 'none';
   document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('cam-btn').style.display = 'flex';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
