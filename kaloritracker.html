@@ -118,6 +118,13 @@
     transition: background 0.15s;
   }
   .add-btn:active { background: rgba(34,197,94,0.2); }
+  .reanalyze-btn {
+    width: 100%; padding: 10px; background: transparent;
+    border: 0.5px solid rgba(34,197,94,0.3); border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; color: var(--green); cursor: pointer;
+    font-family: inherit; margin-bottom: 10px; transition: background 0.15s;
+  }
+  .reanalyze-btn:active { background: rgba(34,197,94,0.08); }
   .portion-row { margin-bottom: 14px; }
   .portion-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
   .portion-label strong { color: var(--text); font-size: 15px; }
@@ -296,7 +303,8 @@
       </div>
       <input type="range" class="portion-slider" id="portion-slider" min="25" max="300" value="100" step="5">
     </div>
-    <input type="text" class="note-input" id="r-note" placeholder="Legg til stikkord, f.eks. «halv porsjon» eller «med ekstra saus»…">
+    <input type="text" class="note-input" id="r-note" placeholder="Legg til stikkord, f.eks. «hel pizza» eller «med rømme»…">
+    <button class="reanalyze-btn" id="reanalyze-btn" type="button">↺ Analyser på nytt med stikkord</button>
     <button class="add-btn" id="add-btn" type="button">+ Legg til i dagsoversikt</button>
   </div>
 
@@ -417,6 +425,19 @@ document.getElementById('file-input').addEventListener('change', function() {
 
 document.getElementById('analyze-btn').addEventListener('click', analyzeImage);
 document.getElementById('add-btn').addEventListener('click', addToLog);
+document.getElementById('reanalyze-btn').addEventListener('click', () => {
+  const note = document.getElementById('r-note').value.trim();
+  if (!note) {
+    alert('Skriv inn et stikkord først, f.eks. «hel pizza»');
+    return;
+  }
+  // Move note to hint field so analyzeImage picks it up
+  document.getElementById('hint-input').value = note;
+  document.getElementById('r-note').value = '';
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('cam-btn').style.display = 'none';
+  analyzeImage();
+});
 document.getElementById('clear-btn').addEventListener('click', () => {
   if (confirm('Nullstille dagens logg?')) {
     log = []; save(); renderLog(); updateUI();
