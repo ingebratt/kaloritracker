@@ -118,6 +118,13 @@
     transition: background 0.15s;
   }
   .add-btn:active { background: rgba(34,197,94,0.2); }
+  .portion-row { margin-bottom: 14px; }
+  .portion-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+  .portion-label strong { color: var(--text); font-size: 15px; }
+  .portion-slider { width: 100%; accent-color: var(--green); height: 4px; }
+  .note-input { width: 100%; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; padding: 10px 12px; font-family: inherit; margin-bottom: 14px; }
+  .note-input::placeholder { color: var(--dim); }
+  .note-input:focus { outline: none; border-color: rgba(34,197,94,0.5); }
 
   /* Log */
   .log-section { margin-top: 8px; }
@@ -279,6 +286,14 @@
         <div class="macro-val" id="r-fett"></div>
       </div>
     </div>
+    <div class="portion-row">
+      <div class="portion-label">
+        <span>Porsjonsjustering</span>
+        <strong id="portion-display">100% · <span id="r-kcal-adjusted">–</span> kcal</strong>
+      </div>
+      <input type="range" class="portion-slider" id="portion-slider" min="25" max="300" value="100" step="5">
+    </div>
+    <input type="text" class="note-input" id="r-note" placeholder="Legg til stikkord, f.eks. «halv porsjon» eller «med ekstra saus»…">
     <button class="add-btn" id="add-btn" type="button">+ Legg til i dagsoversikt</button>
   </div>
 
@@ -442,6 +457,15 @@ async function analyzeImage() {
     document.getElementById('r-prot').textContent = parsed.protein_g + 'g';
     document.getElementById('r-karb').textContent = parsed.karbohydrat_g + 'g';
     document.getElementById('r-fett').textContent = parsed.fett_g + 'g';
+    // Reset slider and note
+    document.getElementById('portion-slider').value = 100;
+    document.getElementById('r-note').value = '';
+    document.getElementById('portion-display').innerHTML = '100% · <span id="r-kcal-adjusted">' + parsed.kalorier + '</span> kcal';
+    document.getElementById('portion-slider').oninput = function() {
+      const pct = parseInt(this.value);
+      const adj = Math.round(currentResult.kalorier * pct / 100);
+      document.getElementById('portion-display').innerHTML = pct + '% · <span id="r-kcal-adjusted">' + adj + '</span> kcal';
+    };
     document.getElementById('cam-btn').style.display = 'none';
     document.getElementById('result-card').style.display = 'block';
     setTimeout(() => {
@@ -464,12 +488,14 @@ function addToLog() {
   }
   const now = new Date();
   // Snapshot data before clearing state
+  const pct = parseInt(document.getElementById('portion-slider').value) / 100;
+  const note = document.getElementById('r-note').value.trim();
   const entry = {
-    navn: currentResult.navn,
-    kalorier: currentResult.kalorier,
-    protein: currentResult.protein_g,
-    karb: currentResult.karbohydrat_g,
-    fett: currentResult.fett_g,
+    navn: currentResult.navn + (note ? ' (' + note + ')' : ''),
+    kalorier: Math.round(currentResult.kalorier * pct),
+    protein: Math.round(currentResult.protein_g * pct),
+    karb: Math.round(currentResult.karbohydrat_g * pct),
+    fett: Math.round(currentResult.fett_g * pct),
     tid: now.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }),
     img: currentImgSrc
   };
