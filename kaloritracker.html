@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kalorier">
+<meta name="theme-color" content="#0a0a0a">
+<title>Kaloritracker</title>
+<link rel="manifest" href="manifest.json">
+
+<!-- Apple touch icons (inline SVG fallback) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a0a0a'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle'%3E🥗%3C/text%3E%3C/svg%3E">
+
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --muted: #888;
+    --dim: #555;
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+    overscroll-behavior: none;
+  }
+
+  .app { max-width: 430px; margin: 0 auto; padding: 0 16px 100px; }
+
+  /* Header */
+  .header { padding: 56px 0 24px; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .header-greeting { font-size: 13px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .header-date { font-size: 13px; color: var(--dim); }
+  .header-title { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
+  .header-title span { color: var(--green); }
+
+  /* Ring */
+  .ring-wrap { display: flex; justify-content: center; padding: 24px 0 28px; position: relative; }
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 12; }
+  .ring-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.3s; }
+  .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .ring-kcal { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; }
+  .ring-label { font-size: 12px; color: var(--muted); margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* Stats row */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius-sm); padding: 14px 16px; border: 0.5px solid var(--border); }
+  .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-val { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat-unit { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .stat-green { color: var(--green); }
+  .stat-amber { color: var(--amber); }
+  .stat-red { color: var(--red); }
+
+  /* Camera button */
+  .cam-btn {
+    width: 100%; height: 64px; background: var(--green); border: none; border-radius: var(--radius);
+    font-size: 16px; font-weight: 600; color: #000; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 10px; margin-bottom: 20px; letter-spacing: -0.01em;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .cam-btn:active { transform: scale(0.97); opacity: 0.9; }
+  .cam-icon { font-size: 22px; }
+
+  /* Preview */
+  .preview-section { margin-bottom: 20px; }
+  .preview-img { width: 100%; border-radius: var(--radius); object-fit: cover; max-height: 260px; display: block; }
+  .analyze-btn {
+    width: 100%; margin-top: 10px; height: 52px; background: var(--surface2); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .analyze-btn:active { background: var(--surface); }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Analyzing */
+  .analyzing {
+    text-align: center; padding: 24px; color: var(--muted); font-size: 14px;
+    background: var(--surface); border-radius: var(--radius); margin-bottom: 20px;
+  }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 10px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result card */
+  .result-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; }
+  .result-name { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .result-desc { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+  .macros { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .macro { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .macro-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .macro-val { font-size: 16px; font-weight: 600; }
+  .macro-kcal .macro-val { color: var(--green); }
+  .macro-prot .macro-val { color: var(--blue); }
+  .macro-karb .macro-val { color: var(--amber); }
+  .macro-fett .macro-val { color: #fb923c; }
+  .add-btn {
+    width: 100%; height: 48px; background: var(--green-dim); border: 0.5px solid rgba(34,197,94,0.25);
+    border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; color: var(--green); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .add-btn:active { background: rgba(34,197,94,0.2); }
+
+  /* Log */
+  .log-section { margin-top: 8px; }
+  .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .log-title { font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .clear-btn { font-size: 12px; color: var(--dim); background: none; border: none; cursor: pointer; padding: 4px 0; }
+  .log-empty { text-align: center; color: var(--dim); font-size: 14px; padding: 32px 0; }
+  .log-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+  .log-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+  .log-info { flex: 1; min-width: 0; }
+  .log-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+  .log-time { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .log-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .log-kcal { font-size: 15px; font-weight: 600; color: var(--green); }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--dim); font-size: 18px; padding: 4px; line-height: 1; }
+  .del-btn:active { color: var(--red); }
+
+  /* Goal editor */
+  .goal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .goal-label { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+  .goal-input { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; font-weight: 600; padding: 8px 12px; width: 100px; text-align: center; font-family: inherit; }
+  .goal-input:focus { outline: none; border-color: var(--green); }
+
+  #file-input { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-greeting">Dagens oversikt</div>
+      <div class="header-date" id="hdr-date"></div>
+    </div>
+    <div class="header-title">Kalorier <span id="hdr-pct">0%</span></div>
+  </div>
+
+  <!-- Ring -->
+  <div class="ring-wrap">
+    <svg class="ring-svg" width="180" height="180" viewBox="0 0 180 180">
+      <circle class="ring-bg" cx="90" cy="90" r="78"/>
+      <circle class="ring-fill" id="ring" cx="90" cy="90" r="78" stroke="#22c55e"
+        stroke-dasharray="490" stroke-dashoffset="490"/>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-kcal" id="ring-num">0</div>
+      <div class="ring-label">kcal spist</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Mål</div>
+      <div class="stat-val" id="s-goal">2000 <span class="stat-unit">kcal</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Gjenstår</div>
+      <div class="stat-val stat-green" id="s-rem">2000 <span class="stat-unit">kcal</span></div>
+    </div>
+  </div>
+
+  <!-- Goal editor -->
+  <div class="goal-row">
+    <span class="goal-label">Daglig mål:</span>
+    <input type="number" class="goal-input" id="goal-input" value="2000" min="500" max="5000" step="50">
+    <span class="goal-label">kcal</span>
+  </div>
+
+  <!-- Camera -->
+  <button class="cam-btn" id="cam-btn">
+    <span class="cam-icon">📷</span> Ta bilde av mat
+  </button>
+  <input type="file" id="file-input" accept="image/*" capture="environment">
+
+  <!-- Preview -->
+  <div class="preview-section" id="preview-section" style="display:none">
+    <img id="preview-img" class="preview-img" src="" alt="">
+    <button class="analyze-btn" id="analyze-btn">Analyser kalorier</button>
+  </div>
+
+  <!-- Analyzing -->
+  <div class="analyzing" id="analyzing" style="display:none">
+    <span class="spinner"></span> Analyserer...
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="result-card" style="display:none">
+    <div class="result-name" id="r-name"></div>
+    <div class="result-desc" id="r-desc"></div>
+    <div class="macros">
+      <div class="macro macro-kcal">
+        <div class="macro-label">Kalorier</div>
+        <div class="macro-val" id="r-kcal"></div>
+      </div>
+      <div class="macro macro-prot">
+        <div class="macro-label">Protein</div>
+        <div class="macro-val" id="r-prot"></div>
+      </div>
+      <div class="macro macro-karb">
+        <div class="macro-label">Karbohydrat</div>
+        <div class="macro-val" id="r-karb"></div>
+      </div>
+      <div class="macro macro-fett">
+        <div class="macro-label">Fett</div>
+        <div class="macro-val" id="r-fett"></div>
+      </div>
+    </div>
+    <button class="add-btn" id="add-btn">+ Legg til i dagsoversikt</button>
+  </div>
+
+  <!-- Log -->
+  <div class="log-section">
+    <div class="log-header">
+      <div class="log-title">Dagens måltider</div>
+      <button class="clear-btn" id="clear-btn">Nullstill dag</button>
+    </div>
+    <div id="log-list"><div class="log-empty">Ingen måltider logget ennå</div></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'kaloritracker_v1';
+const GOAL_KEY = 'kaloritracker_goal';
+let log = [];
+let goal = 2000;
+let currentResult = null;
+let currentImgSrc = null;
+
+function todayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      if (data.date === todayKey()) log = data.items || [];
+      else log = [];
+    } catch(e) { log = []; }
+  }
+  const g = localStorage.getItem(GOAL_KEY);
+  if (g) goal = parseInt(g) || 2000;
+  document.getElementById('goal-input').value = goal;
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: todayKey(), items: log }));
+}
+
+// Date header
+const d = new Date();
+document.getElementById('hdr-date').textContent = d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' });
+
+// Goal input
+document.getElementById('goal-input').addEventListener('change', function() {
+  goal = Math.max(500, Math.min(5000, parseInt(this.value) || 2000));
+  this.value = goal;
+  localStorage.setItem(GOAL_KEY, goal);
+  updateUI();
+});
+
+// Camera
+document.getElementById('cam-btn').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+
+document.getElementById('file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentImgSrc = ev.target.result;
+    document.getElementById('preview-img').src = currentImgSrc;
+    document.getElementById('preview-section').style.display = 'block';
+    document.getElementById('result-card').style.display = 'none';
+    currentResult = null;
+    window.scrollTo({ top: document.getElementById('preview-section').offsetTop - 20, behavior: 'smooth' });
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('analyze-btn').addEventListener('click', analyzeImage);
+document.getElementById('add-btn').addEventListener('click', addToLog);
+document.getElementById('clear-btn').addEventListener('click', () => {
+  if (confirm('Nullstille dagens logg?')) {
+    log = [];
+    save();
+    renderLog();
+    updateUI();
+  }
+});
+
+async function analyzeImage() {
+  if (!currentImgSrc) return;
+  document.getElementById('analyze-btn').disabled = true;
+  document.getElementById('analyzing').style.display = 'block';
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('preview-section').style.display = 'none';
+
+  const base64 = currentImgSrc.split(',')[1];
+  const mediaType = currentImgSrc.split(';')[0].split(':')[1];
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Du er ernæringsekspert. Analyser matbildet og returner KUN gyldig JSON uten markdown:
+{"navn":"kortfattet navn","beskrivelse":"1 setning om rett og porsjon","kalorier":450,"protein_g":25,"karbohydrat_g":40,"fett_g":15,"usikkerhet":"lav|middels|høy"}`,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'Analyser maten og estimer næringsverdier.' }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.map(i => i.text || '').join('');
+    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    currentResult = parsed;
+
+    document.getElementById('r-name').textContent = parsed.navn;
+    document.getElementById('r-desc').textContent = parsed.beskrivelse +
+      (parsed.usikkerhet === 'høy' ? ' ⚠️ Usikker estimering.' : '');
+    document.getElementById('r-kcal').textContent = parsed.kalorier + ' kcal';
+    document.getElementById('r-prot').textContent = parsed.protein_g + 'g';
+    document.getElementById('r-karb').textContent = parsed.karbohydrat_g + 'g';
+    document.getElementById('r-fett').textContent = parsed.fett_g + 'g';
+    document.getElementById('result-card').style.display = 'block';
+    window.scrollTo({ top: document.getElementById('result-card').offsetTop - 20, behavior: 'smooth' });
+  } catch(err) {
+    alert('Klarte ikke analysere bildet. Sjekk internettforbindelsen og prøv igjen.');
+    document.getElementById('preview-section').style.display = 'block';
+  }
+  document.getElementById('analyzing').style.display = 'none';
+  document.getElementById('analyze-btn').disabled = false;
+}
+
+function addToLog() {
+  if (!currentResult) return;
+  const now = new Date();
+  log.push({
+    navn: currentResult.navn,
+    kalorier: currentResult.kalorier,
+    protein: currentResult.protein_g,
+    karb: currentResult.karbohydrat_g,
+    fett: currentResult.fett_g,
+    tid: now.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }),
+    img: currentImgSrc
+  });
+  save();
+  renderLog();
+  updateUI();
+  document.getElementById('result-card').style.display = 'none';
+  currentResult = null;
+  currentImgSrc = null;
+  document.getElementById('file-input').value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteItem(idx) {
+  log.splice(idx, 1);
+  save();
+  renderLog();
+  updateUI();
+}
+
+function updateUI() {
+  const total = log.reduce((s, i) => s + i.kalorier, 0);
+  const rem = goal - total;
+  const pct = Math.round(total / goal * 100);
+  const circ = 490;
+  const offset = circ - Math.min(1, total / goal) * circ;
+
+  document.getElementById('ring-num').textContent = total;
+  document.getElementById('hdr-pct').textContent = pct + '%';
+
+  const ring = document.getElementById('ring');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = pct > 100 ? '#ef4444' : pct > 90 ? '#f59e0b' : '#22c55e';
+
+  document.getElementById('s-goal').innerHTML = goal + ' <span class="stat-unit">kcal</span>';
+
+  const remEl = document.getElementById('s-rem');
+  remEl.innerHTML = Math.abs(rem) + ' <span class="stat-unit">kcal ' + (rem < 0 ? 'over' : '') + '</span>';
+  remEl.className = 'stat-val ' + (rem < 0 ? 'stat-red' : rem < 200 ? 'stat-amber' : 'stat-green');
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  if (log.length === 0) {
+    el.innerHTML = '<div class="log-empty">Ingen måltider logget ennå</div>';
+    return;
+  }
+  el.innerHTML = log.map((item, i) => `
+    <div class="log-item">
+      <img class="log-thumb" src="${item.img}" alt="${item.navn}">
+      <div class="log-info">
+        <div class="log-name">${item.navn}</div>
+        <div class="log-time">${item.tid} &middot; P:${item.protein}g K:${item.karb}g F:${item.fett}g</div>
+      </div>
+      <div class="log-right">
+        <span class="log-kcal">${item.kalorier}</span>
+        <button class="del-btn" onclick="deleteItem(${i})">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+load();
+updateUI();
+renderLog();
+</script>
+</body>
+</html>
