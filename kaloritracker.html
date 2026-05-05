@@ -407,7 +407,7 @@ async function analyzeImage() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-opus-20240229',
         max_tokens: 1000,
         system: `Du er ernæringsekspert. Analyser matbildet og returner KUN gyldig JSON uten markdown:
 {"navn":"kortfattet navn","beskrivelse":"1 setning om rett og porsjon","kalorier":450,"protein_g":25,"karbohydrat_g":40,"fett_g":15,"usikkerhet":"lav|middels|høy"}`,
