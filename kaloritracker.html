@@ -443,7 +443,10 @@ async function analyzeImage() {
     document.getElementById('r-karb').textContent = parsed.karbohydrat_g + 'g';
     document.getElementById('r-fett').textContent = parsed.fett_g + 'g';
     document.getElementById('result-card').style.display = 'block';
-    window.scrollTo({ top: document.getElementById('result-card').offsetTop - 20, behavior: 'smooth' });
+    setTimeout(() => {
+      const card = document.getElementById('result-card');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   } catch(err) {
     alert('Feil: ' + (err.message || JSON.stringify(err)));
     document.getElementById('preview-section').style.display = 'block';
@@ -454,25 +457,31 @@ async function analyzeImage() {
 }
 
 function addToLog() {
-  if (!currentResult) return;
+  if (!currentResult) {
+    alert('Ingen analyse å lagre – ta bilde og analyser først.');
+    return;
+  }
   const now = new Date();
-  const imgToSave = currentImgSrc;
-  const resultToSave = Object.assign({}, currentResult);
-  log.push({
-    navn: resultToSave.navn,
-    kalorier: resultToSave.kalorier,
-    protein: resultToSave.protein_g,
-    karb: resultToSave.karbohydrat_g,
-    fett: resultToSave.fett_g,
+  // Snapshot data before clearing state
+  const entry = {
+    navn: currentResult.navn,
+    kalorier: currentResult.kalorier,
+    protein: currentResult.protein_g,
+    karb: currentResult.karbohydrat_g,
+    fett: currentResult.fett_g,
     tid: now.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }),
-    img: imgToSave
-  });
-  save(); renderLog(); updateUI();
-  document.getElementById('result-card').style.display = 'none';
-  document.getElementById('preview-section').style.display = 'none';
+    img: currentImgSrc
+  };
+  log.push(entry);
+  save();
+  renderLog();
+  updateUI();
+  // Clear state after saving
   currentResult = null;
   currentImgSrc = null;
   document.getElementById('file-input').value = '';
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('preview-section').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
