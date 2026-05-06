@@ -498,7 +498,13 @@ let goal = 2000;
 let currentResult = null;
 let currentImgSrc = null;
 
-function todayKey() { return new Date().toISOString().slice(0,10); }
+function todayKey() { return localDateKey(new Date()); }
+function localDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + day;
+}
 function getApiKey() { return localStorage.getItem(API_KEY_KEY) || ''; }
 
 function showSetup() {
@@ -816,29 +822,31 @@ function shiftPeriod(dir) {
   renderStats();
 }
 
-function dateKey(d) {
-  return d.toISOString().slice(0,10);
+function dateKey(d) { return localDateKey(d); }
+
+function makeLocalDate(y, m, d) {
+  // Creates a date at noon local time to avoid DST/timezone shifts
+  return new Date(y, m, d, 12, 0, 0);
 }
 
 function addDays(d, n) {
-  const r = new Date(d); r.setDate(r.getDate() + n); return r;
+  return makeLocalDate(d.getFullYear(), d.getMonth(), d.getDate() + n);
 }
 
 function getPeriodDays() {
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const now = new Date();
+  const today = makeLocalDate(now.getFullYear(), now.getMonth(), now.getDate());
   let days = [];
 
   if (statsInterval === 'day') {
-    const d = addDays(today, statsPeriodOffset);
-    days = [d];
+    days = [addDays(today, statsPeriodOffset)];
   } else if (statsInterval === 'week') {
-    // Start on Monday
-    const dow = today.getDay() || 7;
+    // Monday = 1, Sunday = 0 → treat Sunday as 7
+    const dow = today.getDay() === 0 ? 7 : today.getDay();
     const mon = addDays(today, -(dow - 1) + statsPeriodOffset * 7);
     for (let i = 0; i < 7; i++) days.push(addDays(mon, i));
   } else if (statsInterval === 'month') {
-    const base = new Date(today.getFullYear(), today.getMonth() + statsPeriodOffset, 1);
+    const base = makeLocalDate(today.getFullYear(), today.getMonth() + statsPeriodOffset, 1);
     const daysInMonth = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
     for (let i = 0; i < daysInMonth; i++) days.push(addDays(base, i));
   }
